@@ -35172,7 +35172,7 @@ async function run() {
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        "X-API-Key": apiKey,
+        "Authorization": "APIKey "+apiKey,
         "Content-Type": "application/json"
       },
       body: JSON.stringify(payload)
