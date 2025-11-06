@@ -35143,12 +35143,12 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 
 async function run() {
   try {
-    const apiKey     = core.getInput("api_key", { required: true });
-    const projectId  = core.getInput("project_id", { required: true });
-    const testId     = core.getInput("test_id", { required: true });
-    const profileId  = core.getInput("profile_id", { required: true });
-    const browser    = core.getInput("browser", { required: true });
-    const headless   = core.getInput("headless") === "true";
+    const apiKey = core.getInput("api_key", { required: true });
+    const projectId = core.getInput("project_id", { required: true });
+    const testId = core.getInput("test_id", { required: true });
+    const profileId = core.getInput("profile_id", { required: true });
+    const browser = core.getInput("browser", { required: true });
+    const headless = core.getInput("headless") === "true";
     const environment = core.getInput("environment") || "Prod";
 
     // ✅ Determine Base URL
@@ -35172,7 +35172,7 @@ async function run() {
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        "Authorization": "APIKey "+apiKey,
+        "Authorization": "APIKey " + apiKey,
         "Content-Type": "application/json"
       },
       body: JSON.stringify(payload)
@@ -35196,7 +35196,7 @@ async function run() {
       buffer += text;
 
       const parts = buffer.split(/\r?\n/);
-      buffer = parts.pop(); // incomplete line stays in buffer
+      buffer = parts.pop();
 
       for (const line of parts) {
         if (!line.trim()) continue;
@@ -35208,20 +35208,19 @@ async function run() {
             const obj = JSON.parse(jsonText);
             console.log(JSON.stringify(obj, null, 2));
 
+            // ✅ ONLY USE result.status
             if (obj?.result?.status) {
               finalStatus = obj.result.status;
+              console.log(`✅ Updated result.status = ${finalStatus}`);
             }
-            if (obj?.run?.status) {
-              finalStatus = obj.run.status;
-            }
+
           } catch (err) {
             console.log("⚠️ Invalid SSE JSON:", jsonText);
           }
-        } else {
-          console.log(line);
         }
       }
     });
+
 
     stream.on("end", () => {
       console.log("✅ SSE Stream ended.");
