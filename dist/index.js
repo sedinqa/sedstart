@@ -32899,18 +32899,6 @@ return new B(c,{type:"multipart/form-data; boundary="+b})}
 /******/ 	__nccwpck_require__.m = __webpack_modules__;
 /******/ 	
 /************************************************************************/
-/******/ 	/* webpack/runtime/compat get default export */
-/******/ 	(() => {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__nccwpck_require__.n = (module) => {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				() => (module['default']) :
-/******/ 				() => (module);
-/******/ 			__nccwpck_require__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
@@ -33004,7 +32992,6 @@ var __webpack_exports__ = {};
 
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
 var core = __nccwpck_require__(7484);
-var core_default = /*#__PURE__*/__nccwpck_require__.n(core);
 ;// CONCATENATED MODULE: external "node:http"
 const external_node_http_namespaceObject = require("node:http");
 ;// CONCATENATED MODULE: external "node:https"
@@ -35156,13 +35143,13 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 
 async function run() {
   try {
-    const apiKey = core_default().getInput('apiKey');
-    const projectId = core_default().getInput('projectId');
-    const testId = core_default().getInput('testId');
-    const profileId = core_default().getInput('profileId');
-    const browser = core_default().getInput('browser');
-    const headless = core_default().getInput('headless') === 'true';
-    const env = core_default().getInput('environment');
+    const apiKey = core.getInput('apiKey');
+    const projectId = core.getInput('projectId');
+    const testId = core.getInput('testId');
+    const profileId = core.getInput('profileId');
+    const browser = core.getInput('browser');
+    const headless = core.getInput('headless') === 'true';
+    const env = core.getInput('environment');
 
     // Select Base URL
     const baseURL =
@@ -35230,14 +35217,14 @@ async function run() {
     console.log(`\n✅ Streaming finished. Final Status: ${finalStatus}`);
 
     if (finalStatus === 'PASS') {
-      core_default().setOutput('result', 'PASS');
+      core.setOutput('result', 'PASS');
       return;
     } else {
-      core_default().setFailed(`SedStart Test Failed: ${finalStatus}`);
+      core.setFailed(`SedStart Test Failed: ${finalStatus}`);
     }
 
   } catch (error) {
-    core_default().setFailed(error.message);
+    core.setFailed(error.message);
   }
 }
 
