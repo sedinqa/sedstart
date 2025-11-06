@@ -1,12 +1,12 @@
-import core from '@actions/core';
+import * as core from '@actions/core';
 import fetch from 'node-fetch';
 
 async function run() {
   try {
-    const apiKey = core.getInput('apiKey');
-    const projectId = core.getInput('projectId');
-    const testId = core.getInput('testId');
-    const profileId = core.getInput('profileId');
+    const apiKey = core.getInput('api_key');
+    const projectId = core.getInput('project_id');
+    const testId = core.getInput('test_id');
+    const profileId = core.getInput('profile_id');
     const browser = core.getInput('browser');
     const headless = core.getInput('headless') === 'true';
     const env = core.getInput('environment');
