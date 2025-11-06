@@ -35143,88 +35143,103 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 
 async function run() {
   try {
-    const apiKey = core.getInput('api_key');
-    const projectId = core.getInput('project_id');
-    const testId = core.getInput('test_id');
-    const profileId = core.getInput('profile_id');
-    const browser = core.getInput('browser');
-    const headless = core.getInput('headless') === 'true';
-    const env = core.getInput('environment');
+    const apiKey     = core.getInput("api_key", { required: true });
+    const projectId  = core.getInput("project_id", { required: true });
+    const testId     = core.getInput("test_id", { required: true });
+    const profileId  = core.getInput("profile_id", { required: true });
+    const browser    = core.getInput("browser", { required: true });
+    const headless   = core.getInput("headless") === "true";
+    const environment = core.getInput("environment") || "Prod";
 
-    // Select Base URL
-    const baseURL =
-      env === 'QA'
-        ? 'https://sedstart.sedinqa.com'
-        : 'https://app.sedstart.com';
+    // ✅ Determine Base URL
+    const baseUrl =
+      environment.toLowerCase() === "qa"
+        ? "https://sedstart.sedinqa.com"
+        : "https://app.sedstart.com";
 
-    const url = `${baseURL}/api/project/${projectId}/runCI`;
+    const url = `${baseUrl}/api/project/${projectId}/runCI`;
 
-    const body = {
+    console.log(`🚀 Triggering SedStart CI Run: ${url}`);
+
+    const payload = {
+      project_id: Number(projectId),
       test_id: Number(testId),
       profile_id: Number(profileId),
       browser,
       headless
     };
 
-    console.log(`🚀 Triggering SedStart CI Run: ${url}`);
-    console.log(`📡 Streaming events...\n`);
-
     const response = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Authorization': `APIKey ${apiKey}`,
-        'Content-Type': 'application/json',
-        'Accept': 'text/event-stream'
+        "X-API-Key": apiKey,
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      const text = await response.text();
+      throw new Error(`HTTP ${response.status}: ${text}`);
     }
 
-    let finalStatus = null;
+    console.log("📡 Streaming events...");
 
-    const reader = response.body.getReader();
-    let buffer = '';
+    // ✅ Node.js Readable Stream (NOT getReader())
+    const stream = response.body;
 
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
+    let buffer = "";
+    let finalStatus = "UNKNOWN";
 
-      buffer += Buffer.from(value).toString();
-      const lines = buffer.split('\n');
+    stream.on("data", (chunk) => {
+      const text = chunk.toString();
+      buffer += text;
 
-      buffer = lines.pop();
+      const parts = buffer.split(/\r?\n/);
+      buffer = parts.pop(); // incomplete line stays in buffer
 
-      for (const line of lines) {
-        if (line.startsWith('data:')) {
-          const jsonStr = line.slice(5).trim();
+      for (const line of parts) {
+        if (!line.trim()) continue;
+
+        if (line.startsWith("data:")) {
+          const jsonText = line.slice(5).trim();
+
           try {
-            const eventData = JSON.parse(jsonStr);
-            console.log(eventData);
+            const obj = JSON.parse(jsonText);
+            console.log(JSON.stringify(obj, null, 2));
 
-            if (eventData?.result?.status) {
-              finalStatus = eventData.result.status;
+            if (obj?.result?.status) {
+              finalStatus = obj.result.status;
+            }
+            if (obj?.run?.status) {
+              finalStatus = obj.run.status;
             }
           } catch (err) {
-            console.log('Non JSON event:', line);
+            console.log("⚠️ Invalid SSE JSON:", jsonText);
           }
+        } else {
+          console.log(line);
         }
       }
-    }
+    });
 
-    console.log(`\n✅ Streaming finished. Final Status: ${finalStatus}`);
+    stream.on("end", () => {
+      console.log("✅ SSE Stream ended.");
 
-    if (finalStatus === 'PASS') {
-      core.setOutput('result', 'PASS');
-      return;
-    } else {
-      core.setFailed(`SedStart Test Failed: ${finalStatus}`);
-    }
+      if (finalStatus === "PASS" || finalStatus === "SUCCESS") {
+        console.log(`✅ Test Finished: ${finalStatus}`);
+        core.setOutput("result", finalStatus);
+      } else {
+        core.setFailed(`❌ Test Finished with status: ${finalStatus}`);
+      }
+    });
+
+    stream.on("error", (err) => {
+      core.setFailed(`❌ Stream error: ${err.message}`);
+    });
 
   } catch (error) {
-    core.setFailed(error.message);
+    core.setFailed(`❌ Action failed: ${error.message}`);
   }
 }
 
